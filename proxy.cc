@@ -1,3 +1,7 @@
+
+#include <iostream> 
+using std::cout; 
+using std::endl;
 #include "proxy.h"
 
 /*********************************
@@ -10,10 +14,17 @@ void* connectionHandler(void *arg) {
   TCPSocket *clientSock = (TCPSocket *) arg;
 
   /********TO BE IMPLEMENTED********/
+
   // Create a ProxyWorker to handle this connection.
   // When done handling the connection, remember to close and delete
   // the socket, and delete the ProxyWorker
+  
+  ProxyWorker* newProxyWorker = new ProxyWorker(clientSock);
+  cout << "ProxyWorker created" << endl;
+  newProxyWorker->handleRequest();
 
+  delete clientSock;
+  delete newProxyWorker;
   pthread_exit(0);
 }
 
@@ -27,7 +38,7 @@ void* connectionHandler(void *arg) {
  *********************************/
 int main(int argc, char *argv[]) {
   signal(SIGPIPE, SIG_IGN);  // To ignore SIGPIPE
-  TCPSocket* clientSock;  // for accepting connections
+  TCPSocket* clientSock =  new TCPSocket();  // for accepting connections
 
   int rc;  // return code for pthread
 
@@ -36,15 +47,26 @@ int main(int argc, char *argv[]) {
   /********TO BE IMPLEMENTED********/
   // Creata a socket, bind it and listen for incoming connection.
 
-  std::cout << "Proxy running at " << port << "..." << std::endl;
+  //NEW PART
+   //make sure to add try catch statements for these later
+  unsigned short port_num = 0; //is this really correct?
+  clientSock->Bind(port_num);
+  clientSock->Listen();
+  clientSock->getPort(port_num);
+
+  std::cout << "Proxy running at " << port_num << "..." << std::endl;
 
   // start the infinite server loop
   while (true) {
     /********TO BE IMPLEMENTED********/
-    break; // remove this break when you have TCPSocket::Accept. This break
+    //break; // remove this break when you have TCPSocket::Accept. This break
            // is to stop the infinite loop from creating too many thread and
            // crashs the program
     // accept incoming connections
+    
+    TCPSocket* acceptSocket;
+    acceptSocket = clientSock->Accept();
+   cout << "Connection accepted" << endl;
 
     // create new thread
     pthread_t thread;
@@ -59,6 +81,8 @@ int main(int argc, char *argv[]) {
 
   /********TO BE IMPLEMENTED********/
   // close the listening sock
+  clientSock->Close();
+  //Check this if it properly closed; 0 is the correct return.
 
   std::cout << "Parent process termianted." << std::endl;
 
