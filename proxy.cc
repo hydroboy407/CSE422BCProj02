@@ -38,7 +38,7 @@ void* connectionHandler(void *arg) {
  *********************************/
 int main(int argc, char *argv[]) {
   signal(SIGPIPE, SIG_IGN);  // To ignore SIGPIPE
-  TCPSocket* clientSock =  new TCPSocket();  // for accepting connections
+  TCPSocket* clientSock;  // for accepting connections
 
   int rc;  // return code for pthread
 
@@ -50,9 +50,10 @@ int main(int argc, char *argv[]) {
   //NEW PART
    //make sure to add try catch statements for these later
   unsigned short port_num = 0; //is this really correct?
-  clientSock->Bind(port_num);
-  clientSock->Listen();
-  clientSock->getPort(port_num);
+  TCPSocket* proxySock = new TCPSocket();
+  proxySock->Bind(port_num);
+  proxySock->Listen();
+  proxySock->getPort(port_num);
 
   std::cout << "Proxy running at " << port_num << "..." << std::endl;
 
@@ -64,9 +65,8 @@ int main(int argc, char *argv[]) {
            // crashs the program
     // accept incoming connections
     
-    TCPSocket* acceptSocket;
-    acceptSocket = clientSock->Accept();
-   cout << "Connection accepted" << endl;
+   clientSock = proxySock->Accept();
+   if(clientSock == NULL) cout << "Did not connect client" << endl;
 
     // create new thread
     pthread_t thread;
