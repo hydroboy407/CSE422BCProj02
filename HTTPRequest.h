@@ -27,16 +27,16 @@ class HTTPRequest : public HTTPMessage {
  public:
   /*********************************
    * Name:    HTTPRequest
-   * Purpose: constructor, constructs a new HTTPRequest. Note that 
-   *          nothing is done to check the validity of the arguments 
+   * Purpose: constructor, constructs a new HTTPRequest. Note that
+   *          nothing is done to check the validity of the arguments
    *          -- make sure you trust your input.
    * Receive: method - The action being requested (e.g. GET, POST, etc).
-   *          path - The URL of the resource to which the request 
-   *                applies. In most cases, this will typically 
+   *          path - The URL of the resource to which the request
+   *                applies. In most cases, this will typically
    *                just be the path of the resource on the server
    *                (e.g. /somedir/something.txt).
-   *          version - The HTTP version of the client making the 
-   *                    request. Default is HTTP 1.1 (which ought to 
+   *          version - The HTTP version of the client making the
+   *                    request. Default is HTTP 1.1 (which ought to
    *                    be what you support).
    * Return:  None
    *********************************/
@@ -54,32 +54,32 @@ class HTTPRequest : public HTTPMessage {
 
   /*********************************
    * Name:    parse
-   * Purpose: constructs an HTTPRequest object corresponding to the 
-   *          actual request text in the given buffer. Use this if 
-   *          you've received a request and want to know what it's 
+   * Purpose: constructs an HTTPRequest object corresponding to the
+   *          actual request text in the given buffer. Use this if
+   *          you've received a request and want to know what it's
    *          asking.
    * Receive: data - The text buffer in which the request is stored.
    *          length - The length of the request data, in bytes.
-   * Return:  An HTTPRequest parsed from the request text/data. If 
+   * Return:  An HTTPRequest parsed from the request text/data. If
    *          parsing fails, a NULL pointer will be returned instead.
    *********************************/
   static HTTPRequest* parse(const char* data, unsigned length);
 
   /*********************************
    * Name:    parse
-   * Purpose: constructs an HTTPRequest object corresponding to the 
-   *          actual request string. Use this if you've received a 
+   * Purpose: constructs an HTTPRequest object corresponding to the
+   *          actual request string. Use this if you've received a
    *          request and want to know what it's asking.
    * Receive: requestString - The string in which the request is stored.
-   * Return:  An HTTPRequest parsed from the request string. If 
+   * Return:  An HTTPRequest parsed from the request string. If
    *          parsing fails, a NULL pointer will be returned instead.
    *********************************/
   static HTTPRequest* parse(const std::string& requestString);
 
   /*********************************
    * Name:    createGetRequest
-   * Purpose: Constructs a new HTTP GET request, with a header or 
-   *          two set to make it more likely that the server will 
+   * Purpose: Constructs a new HTTP GET request, with a header or
+   *          two set to make it more likely that the server will
    *          return an easy-to-handle result.
    * Receive: path - The URL of the resource to get.
    *          version - The HTTP version to associate with the request.
@@ -98,12 +98,12 @@ class HTTPRequest : public HTTPMessage {
 
   /*********************************
    * Name:    receive
-   * Purpose: Receive data from the socket sock and create an 
+   * Purpose: Receive data from the socket sock and create an
    *          HTTPRequest object by parsing that piece of data.
    * Receive: socket - The TCPSocket we want to receive from
-   * Return:  receive a piece of data from the socket, until a line 
-   *          with only CLRF is found, which means it is the end of 
-   *          the header. Create an HTTPRequest object from that 
+   * Return:  receive a piece of data from the socket, until a line
+   *          with only CLRF is found, which means it is the end of
+   *          the header. Create an HTTPRequest object from that
    *          header.
    *********************************/
   static HTTPRequest* receive(TCPSocket& socket);
@@ -149,7 +149,7 @@ class HTTPRequest : public HTTPMessage {
 
   /*********************************
    * Name:    getHost
-   * Purpose: Looks up the host for which the request is intended, 
+   * Purpose: Looks up the host for which the request is intended,
    *          from the request's Host header.
    * Receive: outHost - Will be set to the request's target host. If the host
    *          has not yet been entered, it will be set to an empty string.
@@ -159,8 +159,8 @@ class HTTPRequest : public HTTPMessage {
 
   /*********************************
    * Name:    print
-   * Purpose: Prints the request object to a text string, suitable 
-   *          for transmission to an HTTP server. Includes the 
+   * Purpose: Prints the request object to a text string, suitable
+   *          for transmission to an HTTP server. Includes the
    *          terminating blank line and all request headers.
    * Receive: outputString - Will be set to the request text.
    * Return:  None
@@ -169,13 +169,13 @@ class HTTPRequest : public HTTPMessage {
 
   /*********************************
    * Name:    print
-   * Purpose: Prints the request object to a char array, suitable 
-   *          for transmission to an HTTP server.  Includes the 
+   * Purpose: Prints the request object to a char array, suitable
+   *          for transmission to an HTTP server.  Includes the
    *          terminating blank line and all request headers.
-   * Receive: outputBuffer - The text buffer into which the request 
+   * Receive: outputBuffer - The text buffer into which the request
    *                         should be printed. Will be null-terminated.
-   *          bufferLength - The number of characters available for 
-   *                         writing in the buffer. Printing stops 
+   *          bufferLength - The number of characters available for
+   *                         writing in the buffer. Printing stops
    *                         after this many characters have been
    *                         written.
    * Return:  None
@@ -214,7 +214,7 @@ class HTTPRequest : public HTTPMessage {
 
   /*********************************
    * Name:    setHost
-   * Purpose: Sets the host for which the request is intended, into 
+   * Purpose: Sets the host for which the request is intended, into
    *          the request's Host header.
    * Receive: host - The host to set for the request.
    * Return:  None
