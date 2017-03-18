@@ -1,5 +1,6 @@
 #include "ProxyWorker.h"
 #include <sstream>
+//#include "HTTPRequest.h"
 
 const std::string ProxyWorker::subliminalTag = "CSE422";
 
@@ -95,6 +96,16 @@ bool ProxyWorker::getRequest() {
   // Chck if the request is received correctly
   //
   // Obtain the serverUrl from the request (HTTPRequest::getUrl)
+  clientRequest= HTTPRequest::receive(*clientSock);
+  serverUrl= URL::parse(clientRequest->HTTPRequest::getUrl());
+  if(clientRequest){
+    return true;
+
+  }
+  else{
+    return false;
+  }
+
 }
 
 bool ProxyWorker::checkRequest() {
@@ -111,19 +122,26 @@ bool ProxyWorker::checkRequest() {
   //    Note: the request is still valid
   // 4. Insert subliminal message if the requested object is a html and
   //    does not have a subliminal tag
-  if (true /* 1. complete the condition*/) {
-    /********TO BE IMPLEMENTED********/
+  if (serverUrl == NULL) {
+    serverResponse->setStatusCode(404);
+    std::cout<<"404 Not Found:"<<std::endl;
+    return false;
   } else {  // serverUrl is good
-    if (true /* 2. complete the condition*/) {
-      /********TO BE IMPLEMENTED********/
-    } else if (true /* 3. complete the condition*/) {
-      /********TO BE IMPLEMENTED********/
+    if (serverUrl->getHost()=="www.umich.edu") {
+      serverResponse->setStatusCode(403);
+      std::cout<<"403 Forbidden"<<std::endl;
+      return false;
+    } else if (serverUrl->getHost()=="harbaugh"|| serverUrl->getHost()=="Harbaugh") {
+      serverUrl->setHost("www.youtube.com");
+      serverUrl->setPath("/embed/o7iny6VmnlA?autoplay=1");
+      return true;
     } else if (URL::isHtml(clientRequest->getPath()) &&  // 4.
                (!ProxyWorker::hasSubliminalTag(clientRequest->getUrl()))) {
       // Check if this request has subliminalTag
       // If this request does not contain the subliminalTag, the
       // proxy does not forward this request to the serer. Instead, the proxy
       // returns a subliminal message response to the client.
+
       /********TO BE IMPLEMENTED********/
     } else if (ProxyWorker::hasSubliminalTag(clientRequest->getUrl())){ // 4.
       // If this request contains the subliminalTag, the request has
@@ -142,10 +160,17 @@ bool ProxyWorker::forwardRequest() {
   // pass the client request to the server
   // connected to the server
   /********TO BE IMPLEMENTED********/
+  serverResponse->send(*clientSock);
+  if(!serverResponse){
+    return false;
+  }
+  return true;
+
 }
 
 bool ProxyWorker::getResponse() {
   /********TO BE IMPLEMENTED********/
+  //serverResponse->receiveHeader(clientSock, );
 }
 
 bool ProxyWorker::returnResponse() {
@@ -155,7 +180,7 @@ bool ProxyWorker::returnResponse() {
 bool ProxyWorker::hasSubliminalTag(const std::string& url) {
   // Check if the url contains the subliminalTag in its fragment
   URL* requestUrl = URL::parse(url);  // parse it, URL class does it for us
- 
+
   if (!requestUrl) {
     return false;
   }
