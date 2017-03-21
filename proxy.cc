@@ -22,6 +22,7 @@ void* connectionHandler(void *arg) {
   ProxyWorker* newProxyWorker = new ProxyWorker(clientSock);
   cout << "ProxyWorker created" << endl;
   newProxyWorker->handleRequest();
+  clientSock->Close();
 
   delete clientSock;
   delete newProxyWorker;
@@ -49,6 +50,8 @@ int main(int argc, char *argv[]) {
 
   //NEW PART
    //make sure to add try catch statements for these later
+   //NOTE FOR ALL IMPLEMENTED CODE: USE TRY CATCH TO SHOW ERRORS
+
   unsigned short port_num = 0; //is this really correct?
   TCPSocket* proxySock = new TCPSocket();
   proxySock->Bind(port_num);
