@@ -178,12 +178,19 @@ bool ProxyWorker::forwardRequest() {
   // connected to the server
   /********TO BE IMPLEMENTED********/
 
-  //check if this needs to be connected again
-  //perhaps bind is needed, as well as accept
+  //create get request
   HTTPRequest* request = HTTPRequest::createGetRequest(clientRequest->getUrl());
-  //NOTE: does this request need to be configured as mentioned in the specs 4.1?
-  request->send(serverSock);
+  
+  //get the host, and set it in the request's HOST field
+  std::string requested_host;
+  clientRequest->getHost(requested_host);
+  request->setHost(requested_host);
 
+  //set the connection to non persistent
+  request->setHeaderField("Connection", "close");
+
+  //send out the request
+  request->send(serverSock);
 
   //check for errors, i.e. request is not properly made, 
   return true;
@@ -192,8 +199,6 @@ bool ProxyWorker::forwardRequest() {
 
 bool ProxyWorker::getResponse() {
   /********TO BE IMPLEMENTED********/
-
-   
 
    //This was copied from the client.cc file
    //Get the header attributes
@@ -376,7 +381,6 @@ bool ProxyWorker::getResponse() {
   delete serverResponse;
   delete serverUrl;
   fclose(out);
-  
    
    
    return true;
@@ -384,6 +388,8 @@ bool ProxyWorker::getResponse() {
 
 bool ProxyWorker::returnResponse() {
   /********TO BE IMPLEMENTED********/
+
+  //make sure you set the header field of the response of Server to something to identify yourself, i.e. netid
 }
 
 bool ProxyWorker::hasSubliminalTag(const std::string& url) {
