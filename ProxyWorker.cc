@@ -85,7 +85,6 @@ void ProxyWorker::handleRequest() {
   if (!returnResponse()) {
     return;
   }
-
   return;
 }
 
@@ -97,7 +96,14 @@ bool ProxyWorker::getRequest() {
   // Obtain the serverUrl from the request (HTTPRequest::getUrl)
   
   clientRequest = clientRequest->receive(*clientSock);
+  if(clientRequest == NULL) {
+     std::cout << "Client Request was not properly received." << std::endl;
+  }
+
   serverUrl = URL::parse(clientRequest->getUrl());
+  if(serverUrl == NULL) {
+     std::cout << "Server URL could not be parsed." << std::endl;
+  }
 
   return clientRequest == NULL ? false : true; //if clientRequest successfully recorded
 
@@ -120,9 +126,9 @@ bool ProxyWorker::checkRequest() {
 
   try { //attempt to connect to the server url
      serverSock.Connect(*serverUrl);
-     //NOTE:  check if this should be closed later on
+     serverSock.Close(); //close right after, open again in forward request
   }
-  catch(...) { //error thrown if cannot be connected, set serverUrl to null
+  catch (std::string msg) { //error thrown if cannot be connected, set serverUrl to null
     serverUrl = NULL;
   }
 
@@ -130,8 +136,8 @@ bool ProxyWorker::checkRequest() {
   if (serverUrl == NULL) {
     /********TO BE IMPLEMENTED********/
     //Respond with 404 Not found
-    HTTPResponse* newResponse = HTTPResponse::createStandardResponse(0, 404, "Not Found");
-    newResponse->send(*clientSock);
+    proxyResponse(404);
+
     return false;
 
   } else {  // serverUrl is good
@@ -139,15 +145,17 @@ bool ProxyWorker::checkRequest() {
     //filter for umich
     if (serverUrl->getHost().find("umich.edu") != std::string::npos) {
       /********TO BE IMPLEMENTED********/
-     HTTPResponse* newResponse = HTTPResponse::createStandardResponse(0, 403, "Forbidden");
-     newResponse->send(*clientSock);
+     //respond with 403 Forbidden
+     proxyResponse(403);
      return false;
 
     //filter url for harbaugh, redirect
     } else if (clientRequest->getUrl().find("harbaugh") != std::string::npos
       || clientRequest->getUrl().find("Harbaugh") != std::string::npos) {
-     clientRequest->setHost("www.cse.msu.edu");
+     clientRequest->setHost("cse.msu.edu");
      clientRequest->setPath("/~liuchinj/cse422ss17/lab2_files/whoa.html");
+     serverUrl->setHost("cse.msu.edu");
+     serverUrl->setPath("/~liuchinj/cse422ss17/lab2_files/whoa.html");
 
     //insert subliminal message
     } else if (URL::isHtml(clientRequest->getPath()) &&  // 4.
@@ -157,7 +165,7 @@ bool ProxyWorker::checkRequest() {
       // proxy does not forward this request to the server. Instead, the proxy
       // returns a subliminal message response to the client.
       /********TO BE IMPLEMENTED********/
-     ProxyWorker::subliminalResponse(clientRequest->getUrl(), 1);
+     ProxyWorker::subliminalResponse(clientRequest->getUrl(), 3);
 
     
     } else if (ProxyWorker::hasSubliminalTag(clientRequest->getUrl())){ // 4.
@@ -178,6 +186,9 @@ bool ProxyWorker::forwardRequest() {
   // connected to the server
   /********TO BE IMPLEMENTED********/
 
+  //connect to the server
+  serverSock.Connect(*serverUrl);
+
   //create get request
   HTTPRequest* request = HTTPRequest::createGetRequest(clientRequest->getUrl());
   
@@ -190,19 +201,28 @@ bool ProxyWorker::forwardRequest() {
   request->setHeaderField("Connection", "close");
 
   //send out the request
-  request->send(serverSock);
-
-  //check for errors, i.e. request is not properly made, 
+  try {
+     request->send(serverSock);
+  }
+  catch (std::string msg) {
+     std::cerr << msg << std::endl;
+  }
+ 
   return true;
 
 }
 
 bool ProxyWorker::getResponse() {
   /********TO BE IMPLEMENTED********/
+   //The difference between this function and the client.cc is 
+   //there is no longer a local file, and instead a string responseContent
+   //for holding the entire HTTP response. All occurences of the original fwrite
+   //were replaced by responseContent's string concatentation
 
    //This was copied from the client.cc file
    //Get the header attributes
    std::string responseHeader, responseBody;
+   std::string responseContent = "";
 
   // The client receives the response stream. Check if the data it has
   // contains the whole header.
@@ -212,7 +232,7 @@ bool ProxyWorker::getResponse() {
   } catch (std::string msg) {
     std::cerr << msg << std::endl;
   }
-
+  std::cout << "Response Header Receieved." << std::endl;
   // The HTTPResponse::parse construct a response object. and check if
   // the response is constructed correctly. Also it tries to determine
   // if the response is chunked transfer encoding or not.
@@ -228,31 +248,17 @@ bool ProxyWorker::getResponse() {
     exit(1);
   }
 
-  //This is also copied from the client.cc file.
-  //Get the body, and store into the local file.
-  // check
-
-  FILE* out;
-  out = fopen("ProxyVer.html", "wb");
-
-  if (!out) {
-    std::cerr << "Error opening local copy for writing." << std::endl;
-    // clean up if failed
-    delete serverUrl;
-    exit(1);
-  }
-
-
   int bytesWritten = 0, bytesLeft;
 
+  std::cout << "Receiving Response Body..." << std::endl;
   if (!(serverResponse->isChunked()) &&  // neither chunked transfer encoding
       serverResponse->getContentLen() == -1) {  // nor default transfer encoding
     std::cout << "The response is neither default tranfer encoding "
               << "nor chunked transfer encoding. This response is not "
               << "supported. Terminating the program without saving the file."
               << std::endl;
-  } else if (!(serverResponse->isChunked())) {
-    std::cout << std::endl << "Downloading rest of the file ... " << std::endl;
+  } else if (!(serverResponse->isChunked())) {  
+    //Default identity encoding
     // default transfer encoding does not split the data into
     // chunks. The header specifies a Content-Length field. The client knows
     // exactly how many data it is expecting. The client keeps receiving
@@ -263,9 +269,7 @@ bool ProxyWorker::getResponse() {
     bytesLeft = serverResponse->getContentLen();
 
     do {
-      // If we got a piece of the file in our buffer for the headers,
-      // have that piece written out to the file, so we don't lose it.
-      fwrite(responseBody.c_str(), 1, responseBody.length(), out);
+      responseContent += responseBody;
       bytesWritten += responseBody.length();
       bytesLeft -= responseBody.length();
 
@@ -282,13 +286,12 @@ bool ProxyWorker::getResponse() {
         // clean up
         delete serverResponse;
         delete serverUrl;
-        fclose(out);
         serverSock.Close();
         exit(1);
       }
     } while (bytesLeft > 0);
+
   } else {  // chunked encoding
-    std::cout << std::endl << "Downloading rest of the file ... " << std::endl;
     std::cout << "Chunked transfer encoding" << std::endl;
 
     // As mentioned above, receiveHeader function already split the
@@ -328,21 +331,21 @@ bool ProxyWorker::getResponse() {
           // clean up
           delete serverResponse;
           delete serverUrl;
-          fclose(out);
           serverSock.Close();
           exit(1);
         }
-      } else {
-        // If current data holding is longer than the chunk size, this
-        // piece of data contains more than one chunk. Store the chunk.
-        fwrite(responseBody.c_str(), 1, chunkLen, out);
+      } else {  //we have a chunk or more than a chunk of data
+
+   	responseContent += responseBody.substr(0, chunkLen);  //Add chunk to content
         bytesWritten += chunkLen;
 
         // reorganize the data, remove the chunk from it
         // the + 2 here is to consume the extra CLRF
 
+        //this removes everything prior to the beginning of the new chunk
         responseBody = responseBody.substr(chunkLen + 2,
                            responseBody.length() - chunkLen - 2);
+  	
         serverResponse->receiveLine(serverSock, responseBody);
         // get the blank line between chunks
         serverResponse->receiveLine(serverSock, responseBody);
@@ -378,10 +381,9 @@ bool ProxyWorker::getResponse() {
   // everything's done.
   serverSock.Close();
 
-  delete serverResponse;
-  delete serverUrl;
-  fclose(out);
-   
+  serverResponse->setContent(responseContent);  //set the content of the response's body
+  std::cout << "Content of Response: " << serverResponse->getContentLen() << std::endl;
+  //delete serverUrl;  //old deleted
    
    return true;
 }
@@ -389,7 +391,30 @@ bool ProxyWorker::getResponse() {
 bool ProxyWorker::returnResponse() {
   /********TO BE IMPLEMENTED********/
 
-  //make sure you set the header field of the response of Server to something to identify yourself, i.e. netid
+  //Set the Server header fields and Transfer Encoding fields to custom settings
+  serverResponse->setHeaderField("Server", "wangheilproxy");
+  serverResponse->setHeaderField("Transfer-Encoding", "identity");
+
+  //print out response header
+  std::string responseHeader;
+  serverResponse->print(responseHeader);
+  std::cout << "=========================================================="
+            << std::endl;
+  std::cout << responseHeader << std::endl;
+  std::cout << "=========================================================="
+            << std::endl;
+  
+  
+  //send server response to client
+  try {
+    serverResponse->send(*clientSock);
+  }
+  catch (std::string msg) {
+    std::cerr << msg << std::endl;
+  }
+  //delete serverResponse;  //old deleted
+
+  return true;
 }
 
 bool ProxyWorker::hasSubliminalTag(const std::string& url) {

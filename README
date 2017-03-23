@@ -1,5 +1,246 @@
-Student NetID: alice999, I am working with bob99999.
-Compilation tested on: ned, skinner, marge ...
+Student NetID: wangbri1, I am working with heilcha1
+Compilation tested on: carl
 Command for compile: make
 
-Logs:
+Logs:  When returning responses from proxy to client, the Server field will be
+       modified to "wangheilproxy", assuming the connection isn't automatically
+       flagged as 403 or 404.
+
+
+Running the proxy is done by entering in "./proxy" in this directory.
+It will return a port number, use this when connecting a client/using network
+proxy settings.  For all of the examples below, check the Downloads folder for the new html files.
+
+1.  Testing the proxy with identity encoding/default encoding
+
+	For example, after the proxy is running in port 55555,
+	the client can be called by "./client -s http://cse.msu.edu/~liuchinj/cse422ss17/images/0.jpg -p carl.cse.msu.edu:55555"
+	This is what the proxy will display:
+
+	New connection established.
+	New proxy child thread started.
+	Getting request from client...
+
+	Received request:
+	==========================================================
+	GET /~liuchinj/cse422ss17/images/0.jpg HTTP/1.1
+	Connection: close
+	Host: cse.msu.edu
+	If-Modified-Since: 0
+	==========================================================
+	Checking request...
+	Done. The request is valid.
+
+	Forwarding request to server cse.msu.edu...
+	Getting the response from the server...
+	Response Header Receieved.
+	Receiving Response Body...
+	Default transfer encoding
+	Content-length: 52136
+	bytes written:5540
+	data gotten:5540
+	bytes written:46500
+	data gotten:40960
+	bytes written:52136
+	data gotten:5636
+	Content of Response: 52136
+	Returning the response to the client...
+	==========================================================
+	HTTP/1.1 200 OK
+	Accept-Ranges: bytes
+	Connection: close
+	Content-Length: 52136
+	Content-Type: image/jpeg
+	Date: Thu, 23 Mar 2017 19:53:40 GMT
+	ETag: "cba8-548745cced9db"
+	Last-Modified: Tue, 14 Feb 2017 02:31:34 GMT
+	Server: wangheilproxy
+	Transfer-Encoding: identity
+
+
+	==========================================================
+	Connection Served, Proxy child thread terminating
+
+
+
+
+2.  Testing the proxy with Chunking
+
+	For example, after the proxy is running in port 55555,
+  	the client can be called by "./client -s http://cse.msu.edu -p carl.cse.msu.edu:55555"
+        This is what the proxy will display:
+
+	New connection established.
+	New proxy child thread started.
+	Getting request from client...
+
+	Received request:
+	==========================================================
+	GET / HTTP/1.1
+	Connection: close
+	Host: cse.msu.edu
+	If-Modified-Since: 0
+	==========================================================
+	Checking request...
+
+	Returning subliminal to client ...
+	==========================================================
+	HTTP/1.1 200 OK
+	Connection: close
+	Content-Length: 269
+	Content-Type: text/html
+	Date: Thu, 23 Mar 2017 19:50:05 GMT
+	Server: MSU/CSE422/SS17-Section001
+	==========================================================
+	Done. The request is valid.
+
+	Forwarding request to server cse.msu.edu...
+	Getting the response from the server...
+	Response Header Receieved.
+	Receiving Response Body...
+	Chunked transfer encoding
+	       chunk length: 8744
+	responseBody length: 8746
+	       chunk length: 7399
+	responseBody length: 84
+	       chunk length: 7399
+	responseBody length: 7404
+	       chunk length: 0
+	responseBody length: 2
+	Download complete (16143 bytes written)
+	Content of Response: 16143
+	Returning the response to the client...
+	==========================================================
+	HTTP/1.1 200 OK
+	Connection: close
+	Content-Length: 16143
+	Content-Type: text/html; charset=UTF-8
+	Date: Thu, 23 Mar 2017 19:50:05 GMT
+	Server: wangheilproxy
+	Transfer-Encoding: identity
+	Vary: Accept-Encoding
+
+
+	==========================================================
+	Connection Served, Proxy child thread terminating
+
+
+
+3.  Testing returning 404 Not Found messages
+
+	For example, after the proxy is running in port 55555,
+  	the client can be called by "./client -s http://cseeeee.msu.edu -p carl.cse.msu.edu:55555"
+        This is what the proxy will display:
+
+	New connection established.
+	New proxy child thread started.
+	Getting request from client...
+
+	Received request:
+	==========================================================
+	GET / HTTP/1.1
+	Connection: close
+	Host: cseeeeee.msu.edu
+	If-Modified-Since: 0
+	==========================================================
+	Checking request...
+
+	Returning 404 to client ...
+	==========================================================
+	HTTP/1.1 404 Not Found
+	Connection: close
+	Content-Length: 48
+	Content-Type: text/html
+	Date: Thu, 23 Mar 2017 19:57:15 GMT
+	Server: MSU/CSE422/SS17-Section001
+	==========================================================
+	Connection Served, Proxy child thread terminating
+
+
+
+4.  Testing returning 403 Forbidden messages
+
+	For example, after the proxy is running in port 55555,
+  	the client can be called by "./client -s http://cse.umich.edu -p carl.cse.msu.edu:55555"
+        This is what the proxy will display:
+
+ 	New connection established.
+	New proxy child thread started.
+	Getting request from client...
+
+	Received request:
+	==========================================================
+	GET / HTTP/1.1
+	Connection: close
+	Host: cse.umich.edu
+	If-Modified-Since: 0
+	==========================================================
+	Checking request...
+
+	Returning 403 to client ...
+	==========================================================
+	HTTP/1.1 403 Forbidden
+	Connection: close
+	Content-Length: 48
+	Content-Type: text/html
+	Date: Thu, 23 Mar 2017 19:58:45 GMT
+	Server: MSU/CSE422/SS17-Section001
+	==========================================================
+	Connection Served, Proxy child thread terminating
+
+
+5.  Testing requests containing harbaugh/Harbaugh
+
+	For example, after the proxy is running in port 55555,
+  	the client can be called by "./client -s http://www.huffingtonpost.com/news/harbaugh-brothers/ -p carl.cse.msu.edu:55555"
+        This is what the proxy will display:
+
+	New connection established.
+	New proxy child thread started.
+	Getting request from client...
+
+	Received request:
+	==========================================================
+	GET /news/harbaugh-brothers/ HTTP/1.1
+	Connection: close
+	Host: www.huffingtonpost.com
+	If-Modified-Since: 0
+	==========================================================
+	Checking request...
+	Done. The request is valid.
+
+	Forwarding request to server cse.msu.edu...
+	Getting the response from the server...
+	Response Header Receieved.
+	Receiving Response Body...
+	Default transfer encoding
+	Content-length: 225
+	bytes written:225
+	data gotten:225
+	Content of Response: 225
+	Returning the response to the client...
+	==========================================================
+	HTTP/1.1 200 OK
+	Accept-Ranges: bytes
+	Connection: close
+	Content-Length: 225
+	Content-Type: text/html
+	Date: Thu, 23 Mar 2017 20:02:00 GMT
+	ETag: "e1-54875292261ff"
+	Last-Modified: Tue, 14 Feb 2017 03:28:42 GMT
+	Server: wangheilproxy
+	Transfer-Encoding: identity
+	Vary: Accept-Encoding
+
+
+	==========================================================
+	Connection Served, Proxy child thread terminating
+
+	
+6.  Requests without the subliminal tag
+
+	This can be done using either the chunked/default encoding examples(1,2), but it's better shown through a web browser.
+	We just set the "network proxy" under system preferences to manual, and put in "carl.cse.msu.edu" with port i.e. 55555.
+        After opening Firefox ESR and opening "cse.msu.edu", the subliminal message will show up for 3 seconds and redirect you to
+	the actual html page.  For some reason, every time it tries to connect to Google however, the program will segfault, which is
+	possibly because our proxy isn't as complex as real proxies, and doesn't allow for certain other encodings.

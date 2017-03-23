@@ -20,10 +20,9 @@ void* connectionHandler(void *arg) {
   // the socket, and delete the ProxyWorker
   
   ProxyWorker* newProxyWorker = new ProxyWorker(clientSock);
-  cout << "ProxyWorker created" << endl;
   newProxyWorker->handleRequest();
   clientSock->Close();
-
+  cout << "Connection Served, Proxy child thread terminating" << endl;
   delete clientSock;
   delete newProxyWorker;
   pthread_exit(0);
@@ -66,10 +65,11 @@ int main(int argc, char *argv[]) {
     //break; // remove this break when you have TCPSocket::Accept. This break
            // is to stop the infinite loop from creating too many thread and
            // crashs the program
+
+
     // accept incoming connections
-    
    clientSock = proxySock->Accept();
-   if(clientSock == NULL) cout << "Did not connect client" << endl;
+   if(clientSock == NULL) cout << "Did not Accept Client Connection" << endl;
 
     // create new thread
     pthread_t thread;
@@ -84,8 +84,7 @@ int main(int argc, char *argv[]) {
 
   /********TO BE IMPLEMENTED********/
   // close the listening sock
-  clientSock->Close();
-  //Check this if it properly closed; 0 is the correct return.
+  proxySock->Close();
 
   std::cout << "Parent process termianted." << std::endl;
 
